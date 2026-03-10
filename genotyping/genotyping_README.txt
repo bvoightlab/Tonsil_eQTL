@@ -92,7 +92,7 @@ See typed-only.txt for details
 
 ----------------------------------------------------
 
-confirm array genotyping and expression sequencing match - must be done AFTER expression read alignment
+confirm array genotyping and expression sequencing match - must be done AFTER RNAseq pipeline
 (checked all cell type expression data, only showing one)
 
 #pull list of variants from genotyping array
@@ -101,25 +101,26 @@ bcftools query -f'%CHROM\t%POS\t%REF,%ALT\n' genotypes_22_02_23_all.vcf.gz > als
 #add chr so they match bamfiles
 sed 's/^/chr/' als.tsv > als_chr.tsv
 
+#sample list in same format as in RNAseq pipeline
+
 #make vcf from bam files
-bcftools mpileup -Ou -d 8000 -f Homo_sapiens_assembly38_noALT_noDecoy.fasta -T als_chr.tsv -b NaiveB_bamlist_for_variantcalling.txt | bcftools call -mv -T als_chr.tsv -Oz -o NaiveB_variant_calls.vcf.gz
+ls -1 $PWD/*Aligned.sortedByCoord.out.id.bam > GCB_bamlist_for_variantcalling.txt
+bsub -o bcftools_variant_calling.out 'bcftools mpileup -Ou -d 8000 -f reference_files/Homo_sapiens_assembly38_noALT_noDecoy.fasta -T als_chr.tsv -b GCB_bamlist_for_variantcalling.txt | bcftools call -mv -T als_chr.tsv -Oz -o GCB_variant_calls.vcf.gz'
 
-#split vcf by sample
+#split vcf by sample & run gtcheck to compare sample to array genotypes
 while IFS= read -r line;
-do bcftools view -Oz -s "$line" NaiveT_variant_calls.vcf.gz > "$line".vcf.gz;
-tabix -p vcf "$line".vcf.gz;
-done < samplelist.txt
-#sample list can be same used for markdup step of 
+do bcftools view -Oz -s "$line" /pathto/STAR_alignments/GCB_variant_calls.vcf.gz > /pathto/STAR_alignments/"$line".vcf.gz;
+tabix -p vcf /pathto/STAR_alignments/"$line".vcf.gz;
+bsub -o lsfout_GCB_gtcheck.txt "bcftools gtcheck -g /pathto/ImputationII_withX/all_chr.maf01.Rsq5.vcf.gz /pathto/STAR_alignments/"$line".vcf.gz > "$line"_gtcheck.txt";
+done < GCB_path_list_first_markdup.txt
 
-#call variants in .bam files
-bcftools mpileup -Ou -d 8000 -f Homo_sapiens_assembly38_noALT_noDecoy.fasta -T als_chr.tsv -b NaiveB_bamlist_for_variantcalling.txt | bcftools call -mv -T als_chr.tsv -Oz -o NaiveB_variant_calls.vcf.gz
+#check outputs
+while IFS= read -r line;
+do echo -n $line;
+tail -n 1 "$line"_gtcheck.txt | awk -F '[\t_]' '{print " " $5}';
+done < GCB_path_list_first_markdup.txt > GCB_gtcheck_output.txt
 
-#run gtcheck to compare sample to array genotypes
-for i in samplenamelist;
-do bsub -o lsfout_NaiveB_gtcheck.txt "bcftools gtcheck -g all_chr.final.vcf.gz "$i"NaiveB.vcf.gz > "$i"NaiveB_flipped_gtcheck.txt";
-done
-
-#gtcheck was run before (to identify sample swaps) and after (to confirm new labels were correct)
+#gtcheck was run before (to identify sample swaps) and after (to confirm new labels were correct, using final vcf)
 
 ----------------------------------------------------
 
