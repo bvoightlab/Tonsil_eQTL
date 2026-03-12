@@ -1,0 +1,18 @@
+DICE tested leads: /project/voightlab_01/lorenzk/Romberg_eQTL/tonsil_leads_proxies/leads_with_DICE_proxies.txt
+DICE sig SNPs: /project/voightlab_01/lorenzk/Romberg_eQTL/DICE_data/B_CELL_NAIVE_filtered_genes.txt
+eQTLgen tested leads: /project/voightlab_01/lorenzk/Romberg_eQTL/tonsil_leads_proxies/leads_with_eQTLgen_proxies.txt
+eQTLgen sig SNPs: /project/voight_datasets/eQTLGen/2019-12-11-cis-eQTLsFDR0.05-ProbeLevel-CohortInfoRemoved-BonferroniAdded.txt
+cAID leads: /project/voightlab_01/lorenzk/Romberg_eQTL/tonsil_leads_proxies/leads_with_cAID_proxies.txt
+promoter length: 1000
+egenes: /project/voightlab_01/lorenzk/Romberg_eQTL/tensorqtl/NaiveB.sig_egenes_proxies.txt
+sig pairs: /project/voightlab_01/lorenzk/Romberg_eQTL/tensorqtl/NaiveB_sig.cis_qtl_pairs.txt
+IUIS: /project/voightlab_01/lorenzk/Romberg_eQTL/IUIS_2024/NaiveB_IUIS_egenes.txt
+top halpoinsufficient: /project/voightlab_01/lorenzk/Romberg_eQTL/tensorqtl/NaiveB_top_haploinsufficient_genes.txt
+all haploinsufficient: /project/voightlab_01/lorenzk/Romberg_eQTL/tensorqtl/NaiveB_all_haploinsufficient_genes.txt
+ATAC: /project/voightlab_01/lorenzk/Romberg_eQTL/ATAC_CaptureC_Pahl/NaiveB_atac_overlaps.bed
+Capture C 1frag: /project/voightlab_01/lorenzk/Romberg_eQTL/ATAC_CaptureC_Pahl/NaiveB_1frag_other_overlaps.bed
+Capture C 4frag: /project/voightlab_01/lorenzk/Romberg_eQTL/ATAC_CaptureC_Pahl/NaiveB_4frag_other_overlaps.bed
+traits list: ADE Allergic Asthma Atopic_Asthma Child_Asthma pAsthma 
+coloc summary file base: /project/voightlab_01/lorenzk/Romberg_eQTL/Allergy_coloc/TRAIT/TRAIT_eqtl_coloc_results_all_summaryspread_condPP4.txt
+tonsil focus: NaiveB
+DICE focus: DICE_NaiveB

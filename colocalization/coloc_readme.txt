@@ -13,16 +13,16 @@ python process_gwas_summary_stats.py -c Allergic.yml
 
 #then reformat for locus ID script
 for i in Asthma pAsthma Atopic_Asthma Child_Asthma ADE Allergic;
-do bsub -o reformat.out Rscript /project/voightlab_01/lorenzk/Romberg_eQTL/scripts/reformat_allergic.R /project/voightlab_01/lorenzk/Romberg_eQTL/coloc/sumstats/"$i".quant.processed.bed;
+do bsub -o reformat.out Rscript scripts/reformat_allergic.R "$i".quant.processed.bed;
 done
 
 #Find intervals not in 
 for i in Asthma pAsthma Atopic_Asthma Child_Asthma ADE Allergic;
-do bsub -o locus_def_out.txt python3 /project/voightlab_01/lorenzk/T2D_AMD/NextGen_T2D/FineMap/scripts/define_sig_loci_for_trait_extra_padding.py \
--g /project/voightlab_01/lorenzk/Romberg_eQTL/coloc/sumstats/"$i".temp.txt \
--o /project/voightlab_01/lorenzk/Romberg_eQTL/Allergy_coloc/"$i"_intervals.txt \
+do bsub -o locus_def_out.txt python3 scripts/define_sig_loci_for_trait_extra_padding.py \
+-g "$i".temp.txt \
+-o "$i"_intervals.txt \
 -t 50000 \
--c /project/voightlab_01/lorenzk/T2D_AMD/NextGen_T2D/FineMap/Pan-Trait_Colocalization-main/1_locus_defining/grch38_chr_bounds_mhc_only.bed \
+-c grch38_chr_bounds_mhc_only.bed \
 -p 5e-8 \
 -s 5e-5 \
 -n TRAIT.ANC.txt;
@@ -49,13 +49,13 @@ bedtools intersect -a "$i"/"$i"_leads_hg38.bed -b "$i"/"$i"_intervals.bed -v;
 done
 
 for i in Asthma pAsthma Atopic_Asthma Child_Asthma ADE Allergic;
-do grep -v '\.' /project/voightlab_01/lorenzk/Romberg_eQTL/Allergy_coloc/"$i"/"$i"_leads_hg38.signal_check.bed | awk '!x[$1, $2, $3]++' > /project/voightlab_01/lorenzk/Romberg_eQTL/Allergy_coloc/"$i"/"$i"_overlapping_intervals.bed;
-wc -l /project/voightlab_01/lorenzk/Romberg_eQTL/Allergy_coloc/"$i"/"$i"_overlapping_intervals.bed
+do grep -v '\.' "$i"/"$i"_leads_hg38.signal_check.bed | awk '!x[$1, $2, $3]++' > "$i"/"$i"_overlapping_intervals.bed;
+wc -l "$i"/"$i"_overlapping_intervals.bed
 done
 
 #pull out lead SNP (minimum p value)
 for i in Asthma pAsthma Atopic_Asthma Child_Asthma ADE Allergic;
-do bsub -o leads.out Rscript /project/voightlab_01/lorenzk/Romberg_eQTL/scripts/minp_regions_auto.R /project/voightlab_01/lorenzk/Romberg_eQTL/Allergy_coloc/"$i"/"$i"_overlapping_intervals.bed /project/voightlab_01/lorenzk/Romberg_eQTL/coloc/sumstats/"$i".quant.processed.bed /project/voightlab_01/lorenzk/Romberg_eQTL/Allergy_coloc/"$i"/;
+do bsub -o leads.out Rscript scripts/minp_regions_auto.R "$i"/"$i"_overlapping_intervals.bed "$i".quant.processed.bed "$i"/;
 done
 
 #the lead SNPs and intervals tested are provided in supplementary table 11
@@ -87,13 +87,13 @@ done;
 
 #the eQTL x trait version requires as input the colocquial input file, and the genotyping plink files (for getting pairwise LD)
 #Figure 3A
-lsf_locuscompare_colocquial_insample_paper_TRAF3
+lsf_locuscompare_colocquial_insample_paper_TRAF3.R
 
 #Figure 4A
-lsf_locuscompare_colocquial_insample_paper_ZBTB10
+lsf_locuscompare_colocquial_insample_paper_ZBTB10.R
 
 #Figure 5A
-lsf_locuscompare_colocquial_insample_paper_JAZF1
+lsf_locuscompare_colocquial_insample_paper_JAZF1.R
 
 #the eQTL x eQTL version greps gene info from the cell type all pairs files, and again uses the genotyping plink files for pairwise LD
 #Figure 5B
@@ -113,8 +113,8 @@ eQTL_eQTL_locuscompare_paper_JAZF1_NT_TFH.R
 #also needs the credible set bounds output by eQTL_ABF.R in eQTL pipeline
 
 #other input files for these plots were created using
-bsub -o pygenometracks_prep_out.txt Rscript /project/voightlab_01/lorenzk/Romberg_eQTL/scripts/prep_locuszoom_for_pygenometracks.R NaiveT GCB ENSG00000131323.16 TRAF3 pAsthma 102777476 102911500
-bsub -o pygenometracks_prep_out.txt Rscript /project/voightlab_01/lorenzk/Romberg_eQTL/scripts/prep_locuszoom_for_pygenometracks.R TFH GCB ENSG00000205189.12 ZBTB10 Asthma 80485619 80526265    
+bsub -o pygenometracks_prep_out.txt Rscript scripts/prep_locuszoom_for_pygenometracks.R NaiveT GCB ENSG00000131323.16 TRAF3 pAsthma 102777476 102911500
+bsub -o pygenometracks_prep_out.txt Rscript scripts/prep_locuszoom_for_pygenometracks.R TFH GCB ENSG00000205189.12 ZBTB10 Asthma 80485619 80526265    
 #these require the GWAS trait summary statistics, the all pairs files for relevant cell types, and use the genotyping plink file for pairwise LD
 
 #Figure 3B:
