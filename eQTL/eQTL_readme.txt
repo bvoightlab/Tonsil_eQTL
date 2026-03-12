@@ -13,13 +13,14 @@ It outputs eQTL summary and all pairs files.
 --------------------------------------------------------
 #prep genotyping files for tensorqtl input
 
-plink2 --make-bed --output-chr chrM --vcf /project/voight_viz/lorenzk/Romberg_eQTL/ImputationII_withX/all_chr.final.vcf.gz --out /project/voight_viz/lorenzk/Romberg_eQTL/ImputationII_withX/plink/Romberg
+plink2 --make-bed --output-chr chrM --vcf all_chr.final.vcf.gz --out plink/Romberg
 
 --------------------------------------------------------
 #prep gene expression files for tensorqtl input
+#run separately for each cell type
 
-python /project/voight_ML/lorenzk/Romberg_eQTL/scripts/eqtl_prepare_expression.py GCB_tpm.gct.gz GCB_readcount.gct.gz /project/voight_ML/lorenzk/Romberg_eQTL/reference_files/gencode.v34.GRCh38.genes.collapsed_only.gtf \
-/project/voight_ML/lorenzk/Romberg_eQTL/sample_participant_lookup_GCB.txt  /project/voight_viz/lorenzk/Romberg_eQTL/ImputationII_withX/all_chr.final.chrlist.txt GCB_normalization \
+python eqtl_prepare_expression.py GCB_tpm.gct.gz GCB_readcount.gct.gz reference_files/gencode.v34.GRCh38.genes.collapsed_only.gtf \
+sample_participant_lookup_GCB.txt  all_chr.final.chrlist.txt GCB_normalization \
 --tpm_threshold 0.1 --count_threshold 6 --sample_frac_threshold 0.2 --normalization_method tmm
 
 --------------------------------------------------------
@@ -27,7 +28,7 @@ python /project/voight_ML/lorenzk/Romberg_eQTL/scripts/eqtl_prepare_expression.p
 
 for i in {5..20}  ;
 do for c in NaiveT TFH NaiveB GCB;
-do bsub -o "$c"/peer_lsf.out Rscript /project/voight_ML/lorenzk/Romberg_eQTL/scripts/run_PEER.R /project/voight_viz/lorenzk/Romberg_eQTL/fixed_samplenames/"$c"_normalization.expression.bed.gz "$c"/"$c"_peer"$i" "$i";
+do bsub -o "$c"/peer_lsf.out Rscript run_PEER.R "$c"_normalization.expression.bed.gz "$c"/"$c"_peer"$i" "$i";
 done; done
 
 for c in NaiveT TFH NaiveB GCB;
@@ -38,9 +39,9 @@ do grep "Success" "$c"/peer_lsf.out | wc -l; done
 for i in {5..20}  ;
 do for c in NaiveT TFH NaiveB GCB;
 do cd "$c";
-python /project/voight_ML/lorenzk/Romberg_eQTL/scripts/combine_covariates.py "$c"_peer"$i".PEER_covariates.txt "$c"_peer"$i" \
-    --genotype_pcs /project/voight_viz/lorenzk/Romberg_eQTL/ImputationII_withX/all_chr_LDpruned_transpose.eigenvec \
-    --add_covariates /project/voight_viz/lorenzk/Romberg_eQTL/explicit_covariates_gt_sexes.txt;
+python combine_covariates.py "$c"_peer"$i".PEER_covariates.txt "$c"_peer"$i" \
+    --genotype_pcs all_chr_LDpruned_transpose.eigenvec \
+    --add_covariates explicit_covariates_gt_sexes.txt;
 awk 'NR==1{printf "cov"} 1' "$c"_peer"$i".combined_covariates.txt > "$c"_peer"$i".combined_covariates_header.txt;
 cd ..;
 done; done
@@ -50,8 +51,8 @@ done; done
 for i in {5..20}  ;
 do for c in NaiveT TFH NaiveB GCB;
 do cd "$c";
-bsub -o tensorqtl.out python3.8 -m tensorqtl /project/voight_viz/lorenzk/Romberg_eQTL/ImputationII_withX/plink/Romberg \
-    /project/voight_viz/lorenzk/Romberg_eQTL/fixed_samplenames/"$c"_normalization.expression.bed.gz "$c"_peer"$i" \
+bsub -o tensorqtl.out python3.8 -m tensorqtl plink/Romberg \
+    "$c"_normalization.expression.bed.gz "$c"_peer"$i" \
     --covariates "$c"_peer"$i".combined_covariates_header.txt \
     --mode cis
 cd ..;
@@ -75,32 +76,32 @@ done
 
 #get all summary stats
 
-bsub -o all_sumstats.out python3.8 -m tensorqtl /project/voight_viz/lorenzk/Romberg_eQTL/ImputationII_withX/plink/Romberg \
-    /project/voight_viz/lorenzk/Romberg_eQTL/fixed_samplenames/NaiveB_normalization.expression.bed.gz NaiveB_all\
---covariates /project/voight_viz/lorenzk/Romberg_eQTL/tensorqtl/NaiveB/NaiveB_peer12.combined_covariates_header.txt \
+bsub -o all_sumstats.out python3.8 -m tensorqtl plink/Romberg \
+    NaiveB_normalization.expression.bed.gz NaiveB_all\
+--covariates NaiveB/NaiveB_peer12.combined_covariates_header.txt \
     --mode cis_nominal
 
-bsub -o all_sumstats.out python3.8 -m tensorqtl /project/voight_viz/lorenzk/Romberg_eQTL/ImputationII_withX/plink/Romberg \
-    /project/voight_viz/lorenzk/Romberg_eQTL/fixed_samplenames/GCB_normalization.expression.bed.gz GCB_all\
-    --covariates /project/voight_viz/lorenzk/Romberg_eQTL/tensorqtl/GCB/GCB_peer11.combined_covariates_header.txt \
+bsub -o all_sumstats.out python3.8 -m tensorqtl plink/Romberg \
+    GCB_normalization.expression.bed.gz GCB_all\
+    --covariates GCB/GCB_peer11.combined_covariates_header.txt \
 --mode cis_nominal    
 
-bsub -o all_sumstats.out python3.8 -m tensorqtl /project/voight_viz/lorenzk/Romberg_eQTL/ImputationII_withX/plink/Romberg \
-    /project/voight_viz/lorenzk/Romberg_eQTL/fixed_samplenames/NaiveT_normalization.expression.bed.gz NaiveT_all \
-    --covariates /project/voight_viz/lorenzk/Romberg_eQTL/tensorqtl/NaiveT/NaiveT_peer13.combined_covariates_header.txt \
+bsub -o all_sumstats.out python3.8 -m tensorqtl plink/Romberg \
+    NaiveT_normalization.expression.bed.gz NaiveT_all \
+    --covariates NaiveT/NaiveT_peer13.combined_covariates_header.txt \
     --mode cis_nominal
 
-bsub -o all_sumstats.out python3.8 -m tensorqtl /project/voight_viz/lorenzk/Romberg_eQTL/ImputationII_withX/plink/Romberg \
-    /project/voight_viz/lorenzk/Romberg_eQTL/fixed_samplenames/TFH_normalization.expression.bed.gz TFH_all \
-    --covariates /project/voight_viz/lorenzk/Romberg_eQTL/tensorqtl/TFH/TFH_peer12.combined_covariates_header.txt \
+bsub -o all_sumstats.out python3.8 -m tensorqtl plink/Romberg \
+    TFH_normalization.expression.bed.gz TFH_all \
+    --covariates TFH/TFH_peer12.combined_covariates_header.txt \
     --mode cis_nominal
 	
 #convert parquet files to plaintext
 
-bsub -o parquet_to_txt.out  python /project/voight_ML/lorenzk/Romberg_eQTL/scripts/parquet_to_text.py -i /project/voight_viz/lorenzk/Romberg_eQTL/tensorqtl/GCB_all.cis_qtl_pairs
-bsub -o parquet_to_txt.out  python /project/voight_ML/lorenzk/Romberg_eQTL/scripts/parquet_to_text.py -i /project/voight_viz/lorenzk/Romberg_eQTL/tensorqtl/NaiveB_all.cis_qtl_pairs
-bsub -o parquet_to_txt.out  python /project/voight_ML/lorenzk/Romberg_eQTL/scripts/parquet_to_text.py -i /project/voight_viz/lorenzk/Romberg_eQTL/tensorqtl/NaiveT_all.cis_qtl_pairs
-bsub -o parquet_to_txt.out  python /project/voight_ML/lorenzk/Romberg_eQTL/scripts/parquet_to_text.py -i /project/voight_viz/lorenzk/Romberg_eQTL/tensorqtl/TFH_all.cis_qtl_pairs
+bsub -o parquet_to_txt.out  python parquet_to_text.py -i GCB_all.cis_qtl_pairs
+bsub -o parquet_to_txt.out  python parquet_to_text.py -i NaiveB_all.cis_qtl_pairs
+bsub -o parquet_to_txt.out  python parquet_to_text.py -i NaiveT_all.cis_qtl_pairs
+bsub -o parquet_to_txt.out  python parquet_to_text.py -i TFH_all.cis_qtl_pairs
 
 bsub -o parquet_to_txt.out gzip GCB_all.cis_qtl_pairs.txt
 bsub -o parquet_to_txt.out gzip NaiveB_all.cis_qtl_pairs.txt
@@ -112,30 +113,32 @@ bsub -o parquet_to_txt.out gzip TFH_all.cis_qtl_pairs.txt
 
 cis-eQTL interactions:
 
-bsub -o age.out python3.8 -m tensorqtl /project/voight_viz/lorenzk/Romberg_eQTL/ImputationII_withX/plink/Romberg \
-    /project/voight_viz/lorenzk/Romberg_eQTL/fixed_samplenames/NaiveB_normalization.expression.bed.gz NaiveB_age\
- --covariates /project/voight_viz/lorenzk/Romberg_eQTL/tensorqtl/NaiveB/NaiveB_peer12.combined_covariates_header.txt \
-   --interaction /project/voight_viz/lorenzk/Romberg_eQTL/interactions/age_int.txt \
+bsub -o age.out python3.8 -m tensorqtl plink/Romberg \
+    NaiveB_normalization.expression.bed.gz NaiveB_age\
+ --covariates NaiveB/NaiveB_peer12.combined_covariates_header.txt \
+   --interaction age_int.txt \
    --best_only --mode cis_nominal
 
-bsub -o age.out python3.8 -m tensorqtl /project/voight_viz/lorenzk/Romberg_eQTL/ImputationII_withX/plink/Romberg \
-    /project/voight_viz/lorenzk/Romberg_eQTL/fixed_samplenames/GCB_normalization.expression.bed.gz GCB_age\
-    --covariates /project/voight_viz/lorenzk/Romberg_eQTL/tensorqtl/GCB/GCB_peer11.combined_covariates_header.txt \
-  --interaction /project/voight_viz/lorenzk/Romberg_eQTL/interactions/age_int.txt \
+bsub -o age.out python3.8 -m tensorqtl plink/Romberg \
+    GCB_normalization.expression.bed.gz GCB_age\
+    --covariates GCB/GCB_peer11.combined_covariates_header.txt \
+  --interaction age_int.txt \
    --best_only --mode cis_nominal
 
-bsub -o age.out python3.8 -m tensorqtl /project/voight_viz/lorenzk/Romberg_eQTL/ImputationII_withX/plink/Romberg \
-    /project/voight_viz/lorenzk/Romberg_eQTL/fixed_samplenames/NaiveT_normalization.expression.bed.gz NaiveT_age \
-    --covariates /project/voight_viz/lorenzk/Romberg_eQTL/tensorqtl/NaiveT/NaiveT_peer13.combined_covariates_header.txt \
-  --interaction /project/voight_viz/lorenzk/Romberg_eQTL/interactions/age_int.txt \
+bsub -o age.out python3.8 -m tensorqtl plink/Romberg \
+    NaiveT_normalization.expression.bed.gz NaiveT_age \
+    --covariates NaiveT/NaiveT_peer13.combined_covariates_header.txt \
+  --interaction age_int.txt \
    --best_only --mode cis_nominal
 
-bsub -o age.out python3.8 -m tensorqtl /project/voight_viz/lorenzk/Romberg_eQTL/ImputationII_withX/plink/Romberg \
-    /project/voight_viz/lorenzk/Romberg_eQTL/fixed_samplenames/TFH_normalization.expression.bed.gz TFH_age \
-    --covariates /project/voight_viz/lorenzk/Romberg_eQTL/tensorqtl/TFH/TFH_peer12.combined_covariates_header.txt \
-  --interaction /project/voight_viz/lorenzk/Romberg_eQTL/interactions/age_int.txt \
+bsub -o age.out python3.8 -m tensorqtl plink/Romberg \
+    TFH_normalization.expression.bed.gz TFH_age \
+    --covariates TFH/TFH_peer12.combined_covariates_header.txt \
+  --interaction age_int.txt \
    --best_only --mode cis_nominal 
    
+#nothing was significant for these analyses, so no results are provided.
+
 --------------------------------------------------------
 --------------------------------------------------------
 
@@ -147,12 +150,12 @@ bsub -o age.out python3.8 -m tensorqtl /project/voight_viz/lorenzk/Romberg_eQTL/
 #sample_ID file is list of samples in the indicated data subset (ie all age 4 or younger samples)
 #this block splits out the relevant subset of samples, pulls just those gct files, and runs the prepare expression script to format them for tensorQTL
 for j in lt4 gt4;
-do grep -f sampleID_"$j".txt /project/voight_viz/lorenzk/Romberg_eQTL/fixed_samplenames/GCB_tpm_gct_list.txt > GCB_tpm_gct_list_"$j".txt;
-python /project/voight_ML/lorenzk/Romberg_eQTL/scripts/combine_GCTs.py GCB_tpm_gct_list_"$j".txt GCB_tpm_"$j";
-grep -f sampleID_"$j".txt /project/voight_viz/lorenzk/Romberg_eQTL/fixed_samplenames/GCB_readcount_gct_list.txt > GCB_readcount_gct_list_"$j".txt;
-python /project/voight_ML/lorenzk/Romberg_eQTL/scripts/combine_GCTs.py GCB_readcount_gct_list_"$j".txt GCB_readcount_"$j";
-python /project/voight_ML/lorenzk/Romberg_eQTL/scripts/eqtl_prepare_expression.py GCB_tpm_"$j".gct.gz GCB_readcount_"$j".gct.gz /project/voight_ML/lorenzk/Romberg_eQTL/reference_files/gencode.v34.GRCh38.genes.collapsed_only.gtf \
-	/project/voight_ML/lorenzk/Romberg_eQTL/sample_participant_lookup_GCB.txt  /project/voight_viz/lorenzk/Romberg_eQTL/ImputationII_withX/all_chr.final.chrlist.txt GCB_"$j"_normalization \
+do grep -f sampleID_"$j".txt GCB_tpm_gct_list.txt > GCB_tpm_gct_list_"$j".txt;
+python combine_GCTs.py GCB_tpm_gct_list_"$j".txt GCB_tpm_"$j";
+grep -f sampleID_"$j".txt GCB_readcount_gct_list.txt > GCB_readcount_gct_list_"$j".txt;
+python combine_GCTs.py GCB_readcount_gct_list_"$j".txt GCB_readcount_"$j";
+python eqtl_prepare_expression.py GCB_tpm_"$j".gct.gz GCB_readcount_"$j".gct.gz reference_files/gencode.v34.GRCh38.genes.collapsed_only.gtf \
+	sample_participant_lookup_GCB.txt  all_chr.final.chrlist.txt GCB_"$j"_normalization \
 	--tpm_threshold 0.1 --count_threshold 6 --sample_frac_threshold 0.2 --normalization_method tmm;
 done
 
@@ -160,7 +163,7 @@ done
 for i in {1..15};
 do for c in NaiveT TFH NaiveB GCB;
 do for j in lt4 gt4;
-do bsub -o "$c"/peer_age_lsf.out Rscript /project/voight_ML/lorenzk/Romberg_eQTL/scripts/run_PEER.R /project/voight_viz/lorenzk/Romberg_eQTL/age_strat/"$c"_"$j"_normalization.expression.bed.gz "$c"/"$c"_"$j"_peer"$i" "$i";
+do bsub -o "$c"/peer_age_lsf.out Rscript run_PEER.R "$c"_"$j"_normalization.expression.bed.gz "$c"/"$c"_"$j"_peer"$i" "$i";
 done; done; done
 
 #confirm success
@@ -173,9 +176,9 @@ for c in NaiveT TFH NaiveB GCB;
 do cd "$c";
 for i in {1..15}  ;
 do for j in lt4 gt4;
-do python /project/voight_ML/lorenzk/Romberg_eQTL/scripts/combine_covariates.py "$c"_"$j"_peer"$i".PEER_covariates.txt "$c"_"$j"_peer"$i" \
-    --genotype_pcs /project/voight_viz/lorenzk/Romberg_eQTL/age_strat/PCs_"$j".txt \
-    --add_covariates /project/voight_viz/lorenzk/Romberg_eQTL/age_strat/cov_"$j".txt;
+do python combine_covariates.py "$c"_"$j"_peer"$i".PEER_covariates.txt "$c"_"$j"_peer"$i" \
+    --genotype_pcs PCs_"$j".txt \
+    --add_covariates cov_"$j".txt;
 awk 'NR==1{printf "cov"} 1' "$c"_"$j"_peer"$i".combined_covariates.txt > "$c"_"$j"_peer"$i".combined_covariates_header.txt;
 done; done; cd ..; done
 
@@ -184,8 +187,8 @@ for i in {1..15}  ;
 do for c in NaiveT TFH NaiveB GCB;
 do cd "$c";
 for j in lt4 gt4;
-do bsub -o age_tensorqtl.out python3.8 -m tensorqtl /project/voight_viz/lorenzk/Romberg_eQTL/ImputationII_withX/plink/Romberg \
-    /project/voight_viz/lorenzk/Romberg_eQTL/age_strat/"$c"_"$j"_normalization.expression.bed.gz "$c"_"$j"_peer"$i" \
+do bsub -o age_tensorqtl.out python3.8 -m tensorqtl plink/Romberg \
+    "$c"_"$j"_normalization.expression.bed.gz "$c"_"$j"_peer"$i" \
     --covariates "$c"_"$j"_peer"$i".combined_covariates_header.txt \
     --mode cis
 done; cd ..; done; done
@@ -233,8 +236,8 @@ done; done
 #so that it was easier to get the allpairs files
 for c in NaiveT TFH NaiveB GCB;
 do for j in lt4 gt4;
-do bsub -o strat_all_sumstats.out python3.8 -m tensorqtl /project/voight_viz/lorenzk/Romberg_eQTL/ImputationII_withX/plink/Romberg \
-    /project/voight_viz/lorenzk/Romberg_eQTL/age_strat/"$c"_"$j"_normalization.expression.bed.gz "$c"_"$j"_all \
+do bsub -o strat_all_sumstats.out python3.8 -m tensorqtl plink/Romberg \
+    "$c"_"$j"_normalization.expression.bed.gz "$c"_"$j"_all \
     --covariates "$c"_"$j".combined_covariates_header.txt \
     --mode cis_nominal;
 done; done
@@ -242,7 +245,7 @@ done; done
 #and then convert parquet to text files
 for c in NaiveT TFH NaiveB GCB;
 do for j in lt4 gt4;
-do bsub -o parquet_to_txt.out python /project/voight_ML/lorenzk/Romberg_eQTL/scripts/parquet_to_text.py -i /project/voight_viz/lorenzk/Romberg_eQTL/tensorqtl/"$c"_"$j"_all.cis_qtl_pairs
+do bsub -o parquet_to_txt.out python parquet_to_text.py -i "$c"_"$j"_all.cis_qtl_pairs
 done; done
 
 for c in NaiveT TFH NaiveB GCB;
