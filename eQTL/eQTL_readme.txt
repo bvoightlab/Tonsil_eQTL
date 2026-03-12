@@ -13,7 +13,7 @@ It outputs eQTL summary and all pairs files.
 --------------------------------------------------------
 #prep genotyping files for tensorqtl input
 
-plink2 --make-bed --output-chr chrM --vcf all_chr.final.vcf.gz --out plink/Romberg
+plink2 --make-bed --output-chr chrM --vcf all_chr.final.vcf.gz --out plink/path
 
 --------------------------------------------------------
 #prep gene expression files for tensorqtl input
@@ -51,7 +51,7 @@ done; done
 for i in {5..20}  ;
 do for c in NaiveT TFH NaiveB GCB;
 do cd "$c";
-bsub -o tensorqtl.out python3.8 -m tensorqtl plink/Romberg \
+bsub -o tensorqtl.out python3.8 -m tensorqtl plink/path \
     "$c"_normalization.expression.bed.gz "$c"_peer"$i" \
     --covariates "$c"_peer"$i".combined_covariates_header.txt \
     --mode cis
@@ -76,22 +76,22 @@ done
 
 #get all summary stats
 
-bsub -o all_sumstats.out python3.8 -m tensorqtl plink/Romberg \
+bsub -o all_sumstats.out python3.8 -m tensorqtl plink/path \
     NaiveB_normalization.expression.bed.gz NaiveB_all\
 --covariates NaiveB/NaiveB_peer12.combined_covariates_header.txt \
     --mode cis_nominal
 
-bsub -o all_sumstats.out python3.8 -m tensorqtl plink/Romberg \
+bsub -o all_sumstats.out python3.8 -m tensorqtl plink/path \
     GCB_normalization.expression.bed.gz GCB_all\
     --covariates GCB/GCB_peer11.combined_covariates_header.txt \
 --mode cis_nominal    
 
-bsub -o all_sumstats.out python3.8 -m tensorqtl plink/Romberg \
+bsub -o all_sumstats.out python3.8 -m tensorqtl plink/path \
     NaiveT_normalization.expression.bed.gz NaiveT_all \
     --covariates NaiveT/NaiveT_peer13.combined_covariates_header.txt \
     --mode cis_nominal
 
-bsub -o all_sumstats.out python3.8 -m tensorqtl plink/Romberg \
+bsub -o all_sumstats.out python3.8 -m tensorqtl plink/path \
     TFH_normalization.expression.bed.gz TFH_all \
     --covariates TFH/TFH_peer12.combined_covariates_header.txt \
     --mode cis_nominal
@@ -113,25 +113,25 @@ bsub -o parquet_to_txt.out gzip TFH_all.cis_qtl_pairs.txt
 
 cis-eQTL interactions:
 
-bsub -o age.out python3.8 -m tensorqtl plink/Romberg \
+bsub -o age.out python3.8 -m tensorqtl plink/path \
     NaiveB_normalization.expression.bed.gz NaiveB_age\
  --covariates NaiveB/NaiveB_peer12.combined_covariates_header.txt \
    --interaction age_int.txt \
    --best_only --mode cis_nominal
 
-bsub -o age.out python3.8 -m tensorqtl plink/Romberg \
+bsub -o age.out python3.8 -m tensorqtl plink/path \
     GCB_normalization.expression.bed.gz GCB_age\
     --covariates GCB/GCB_peer11.combined_covariates_header.txt \
   --interaction age_int.txt \
    --best_only --mode cis_nominal
 
-bsub -o age.out python3.8 -m tensorqtl plink/Romberg \
+bsub -o age.out python3.8 -m tensorqtl plink/path \
     NaiveT_normalization.expression.bed.gz NaiveT_age \
     --covariates NaiveT/NaiveT_peer13.combined_covariates_header.txt \
   --interaction age_int.txt \
    --best_only --mode cis_nominal
 
-bsub -o age.out python3.8 -m tensorqtl plink/Romberg \
+bsub -o age.out python3.8 -m tensorqtl plink/path \
     TFH_normalization.expression.bed.gz TFH_age \
     --covariates TFH/TFH_peer12.combined_covariates_header.txt \
   --interaction age_int.txt \
@@ -187,7 +187,7 @@ for i in {1..15}  ;
 do for c in NaiveT TFH NaiveB GCB;
 do cd "$c";
 for j in lt4 gt4;
-do bsub -o age_tensorqtl.out python3.8 -m tensorqtl plink/Romberg \
+do bsub -o age_tensorqtl.out python3.8 -m tensorqtl plink/path \
     "$c"_"$j"_normalization.expression.bed.gz "$c"_"$j"_peer"$i" \
     --covariates "$c"_"$j"_peer"$i".combined_covariates_header.txt \
     --mode cis
@@ -236,7 +236,7 @@ done; done
 #so that it was easier to get the allpairs files
 for c in NaiveT TFH NaiveB GCB;
 do for j in lt4 gt4;
-do bsub -o strat_all_sumstats.out python3.8 -m tensorqtl plink/Romberg \
+do bsub -o strat_all_sumstats.out python3.8 -m tensorqtl plink/path \
     "$c"_"$j"_normalization.expression.bed.gz "$c"_"$j"_all \
     --covariates "$c"_"$j".combined_covariates_header.txt \
     --mode cis_nominal;
@@ -287,59 +287,59 @@ bsub -o abf_NaiveB_out.txt -q voltron_long Rscript scripts/eQTL_ABF.R NaiveB ENS
 #provenance for each of the files in the config:
 
 #DICE tested leads: (run plink on all chromosomes) - Tonsil_leads_rsIDs.txt is provided
-bsub -o /project/voight_viz/lorenzk/Romberg_eQTL/tonsil_leads_proxies/EUR_proxies_out.txt plink --allow-no-sex --bfile /project/voight_datasets_01/1kg/NYGC/plink/chrX_hg38 --keep /project/voight_ML/lorenzk/Archive/all_EUR_1kg.txt --r2 --ld-window-r2 0.8 --ld-window 10000 --ld-window-kb 250000 --ld-snp-list /project/voight_viz/lorenzk/Romberg_eQTL/tonsil_leads_proxies/Tonsil_leads_rsIDs.txt --out /project/voight_viz/lorenzk/Romberg_eQTL/tonsil_leads_proxies/chrX
-python /project/voight_ML/lorenzk/Romberg_eQTL/scripts/proxy_check_DICE.py -i /project/voight_viz/lorenzk/Romberg_eQTL/tonsil_leads_proxies/chr -o /project/voight_viz/lorenzk/Romberg_eQTL/tonsil_leads_proxies/leads_with_DICE_proxies.txt
+bsub -o EUR_proxies_out.txt plink --allow-no-sex --bfile 1kg/NYGC/plink/chrX_hg38 --keep all_EUR_1kg.txt --r2 --ld-window-r2 0.8 --ld-window 10000 --ld-window-kb 250000 --ld-snp-list Tonsil_leads_rsIDs.txt --out chrX
+python scripts/proxy_check_DICE.py -i chr -o leads_with_DICE_proxies.txt
 
 #DICE sig SNPs: downloaded data from DICE paper
 
 #eQTLgen tested leads: 
-python /project/voight_ML/lorenzk/Romberg_eQTL/scripts/proxy_check_eQTLgen.py -i /project/voight_viz/lorenzk/Romberg_eQTL/tonsil_leads_proxies/chr -o /project/voight_viz/lorenzk/Romberg_eQTL/tonsil_leads_proxies/leads_with_eQTLgen_proxies.txt
+python scripts/proxy_check_eQTLgen.py -i chr -o leads_with_eQTLgen_proxies.txt
 
 #eQTLgen sig SNPs: downloaded from eQTLgen portal
 
 #cAID leads: cAID_T071513ALL_B_rsidonly.txt was obtained from the authors
-python /project/voight_ML/lorenzk/Romberg_eQTL/scripts/proxy_check_generic.py -i /project/voight_viz/lorenzk/Romberg_eQTL/tonsil_leads_proxies/chr -l /project/voight_ML/lorenzk/Romberg_eQTL/coloc/sumstats/cAID_T071513ALL_B_rsidonly.txt -o /project/voight_viz/lorenzk/Romberg_eQTL/tonsil_leads_proxies/leads_with_cAID_proxies.txt
+python scripts/proxy_check_generic.py -i chr -l cAID_T071513ALL_B_rsidonly.txt -o leads_with_cAID_proxies.txt
 
 #egenes: takes list of significant egenes and the proxy calculations from DICE tested leads section above
 for i in NaiveB GCB NaiveT TFH;
-do python /project/voight_ML/lorenzk/Romberg_eQTL/scripts/proxy_sig_check.py \
--e /project/voight_viz/lorenzk/Romberg_eQTL/tensorqtl/"$i".sig_egenes.txt \
--i /project/voight_viz/lorenzk/Romberg_eQTL/tonsil_leads_proxies/chr \
--o /project/voight_viz/lorenzk/Romberg_eQTL/tensorqtl/"$i".sig_egenes_proxies.txt; done
+do python scripts/proxy_sig_check.py \
+-e "$i".sig_egenes.txt \
+-i chr \
+-o "$i".sig_egenes_proxies.txt; done
 
 #sig pairs: generated by eQTL pipeline above
 
 #IUIS: IUIS gene list was downloaded from IUIS website
 for c in NaiveT TFH NaiveB GCB;
-do grep -Fwf /project/voightlab_01/lorenzk/Romberg_eQTL/IUIS_2024/IUIS_genes.txt /project/voightlab_01/lorenzk/Romberg_eQTL/tensorqtl/"$c".sig_egenes.txt > /project/voightlab_01/lorenzk/Romberg_eQTL/IUIS_2024/"$c"_IUIS_egenes.txt;
+do grep -Fwf IUIS_genes.txt "$c".sig_egenes.txt > "$c"_IUIS_egenes.txt;
 done
 
 #top halpoinsufficient: see below
 #all haploinsufficient: both gene sets downloaded from table S6 of 2022 Collins https://pubmed.ncbi.nlm.nih.gov/35917817/
 for c in NaiveT TFH NaiveB GCB;
-do grep -Fwf /project/voight_viz/lorenzk/Romberg_eQTL/top_haploinsufficient_genes.txt /project/voight_viz/lorenzk/Romberg_eQTL/tensorqtl/"$c".sig_egenes.txt > /project/voight_viz/lorenzk/Romberg_eQTL/tensorqtl/"$c"_top_haploinsufficient_genes.txt;
-grep -Fwf /project/voight_viz/lorenzk/Romberg_eQTL/all_haploinsufficient_genes.txt /project/voight_viz/lorenzk/Romberg_eQTL/tensorqtl/"$c".sig_egenes.txt > /project/voight_viz/lorenzk/Romberg_eQTL/tensorqtl/"$c"_all_haploinsufficient_genes.txt;
+do grep -Fwf top_haploinsufficient_genes.txt "$c".sig_egenes.txt > "$c"_top_haploinsufficient_genes.txt;
+grep -Fwf all_haploinsufficient_genes.txt "$c".sig_egenes.txt > "$c"_all_haploinsufficient_genes.txt;
 done
 
-#ATAC: /project/voightlab_01/lorenzk/Romberg_eQTL/ATAC_CaptureC_Pahl/NaiveB_atac_overlaps.bed
+#ATAC: NaiveB_atac_overlaps.bed
 
-#Capture C 1frag: /project/voightlab_01/lorenzk/Romberg_eQTL/ATAC_CaptureC_Pahl/NaiveB_1frag_other_overlaps.bed
-#Capture C 4frag: /project/voightlab_01/lorenzk/Romberg_eQTL/ATAC_CaptureC_Pahl/NaiveB_4frag_other_overlaps.bed
+#Capture C 1frag: NaiveB_1frag_other_overlaps.bed
+#Capture C 4frag: NaiveB_4frag_other_overlaps.bed
 
 #coloc summary file base: gwas trait specific summary files from colocalization pipeline
 
 #then config file is used to create the scoreboard:
 for i in GCB NaiveB NaiveT TFH;
-do python /project/voightlab_01/lorenzk/Romberg_eQTL/scripts/eQTL_miniscoreboard_egenes_sig.py \
--x /project/voightlab_01/lorenzk/Romberg_eQTL/Jan25_Scoreboard/"$i"_egenes_overlaps_Jan2025_config.txt \
--o /project/voightlab_01/lorenzk/Romberg_eQTL/Jan25_Scoreboard/"$i"_egenes_Jan2025_scoreboard.txt; done
+do python scripts/eQTL_miniscoreboard_egenes_sig.py \
+-x "$i"_egenes_overlaps_Jan2025_config.txt \
+-o "$i"_egenes_Jan2025_scoreboard.txt; done
 
 #information from differential expression pipeline is included
 #Panther and GSEA gene lists were downloaded as described in the methods
 for i in NaiveT TFH;
-do Rscript /project/voightlab_01/lorenzk/Romberg_eQTL/scripts/scoreboard_add_WGCNA_genesets.R /project/voightlab_01/lorenzk/Romberg_eQTL/Jan25_Scoreboard/"$i"_egenes_Jan2025_scoreboard.txt T; done
+do Rscript scripts/scoreboard_add_WGCNA_genesets.R "$i"_egenes_Jan2025_scoreboard.txt T; done
 
 for i in NaiveB GCB;
-do Rscript /project/voightlab_01/lorenzk/Romberg_eQTL/scripts/scoreboard_add_WGCNA_genesets.R /project/voightlab_01/lorenzk/Romberg_eQTL/Jan25_Scoreboard/"$i"_egenes_Jan2025_scoreboard.txt B; done
+do Rscript scripts/scoreboard_add_WGCNA_genesets.R "$i"_egenes_Jan2025_scoreboard.txt B; done
 
 #Then removed columns no longer relevant to the paper before compiling as supplementary table 1
