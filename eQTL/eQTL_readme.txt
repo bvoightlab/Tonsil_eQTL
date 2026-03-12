@@ -267,3 +267,15 @@ Upset_filter_proxyoverlap.R
 #upset plots for subset analysis (supplementary figures 1 & 2)
 #use significant egenes files
 Upset_age_sex.R
+
+--------------------------------------------------------
+--------------------------------------------------------
+#fine mapping was run using the approximate bayes factor method in R
+#this takes as input the cell type all pairs file
+#and outputs a credible set file (all available on zenodo, colocalized genes in supplementary table 6)
+#and a credible set bounds bed file used in the stacked locus plots
+
+#for example:
+bsub -o abf_NaiveB_out.txt -q voltron_long Rscript scripts/eQTL_ABF.R NaiveB ENSG00000153814.13 JAZF1
+
+

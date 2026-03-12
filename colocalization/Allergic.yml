@@ -1,0 +1,33 @@
+##my yaml config file for generating all of the cleaned summary stat bed files via the bash wrapper##
+---
+dbsnp_vcf_file_locs:
+  GRCh37: "/project/voight_datasets/dbSNP/dbSNP155.GRCh37.vcf.gz"
+  GRCh38: "/project/voight_datasets/dbSNP/dbSNP155.GRCh38.vcf.gz"
+conversion_dictionary_locs:
+  rsid_to_GRCh37: "/project/voight_datasets/sumstats_reformatting/dictionaries/rs_to_GRCh37.json"
+  GRCh37_to_rsid: "/project/voight_datasets/sumstats_reformatting/dictionaries/GRCh37_to_rs.json"
+  rsid_to_GRCh38: "/project/voight_datasets/sumstats_reformatting/dictionaries/rs_to_GRCh38.json"
+  GRCh38_to_rsid: "/project/voight_datasets/sumstats_reformatting/dictionaries/GRCh38_to_rs.json"
+  GRCh37_to_GRCh38: "/project/voight_datasets/sumstats_reformatting/dictionaries/GRCh37_to_GRCh38.json"
+  GRCh38_to_GRCh37: "/project/voight_datasets/sumstats_reformatting/dictionaries/GRCh38_to_GRCh37.json"
+final_alignment: 
+  GRCh38
+output_dir:
+  "/project/voightlab_01/lorenzk/Romberg_eQTL/coloc/sumstats"
+retain_all_alignments:
+     False
+traits:
+  Allergic: 
+     file_loc: "/project/voightlab_01/lorenzk/Romberg_eQTL/SHARE_allergy_AF.txt.gz"
+     type: quant
+     align: GRCh37
+     chromo: CHR
+     pos: BP
+     rsid: NA
+     allele_1: EFFECT_ALLELE
+     allele_2: OTHER_ALLELE
+     af_1: EA_AF
+     effect_size: BETA
+     se: SE
+     pval: PVALUE
+     sample_size: N
