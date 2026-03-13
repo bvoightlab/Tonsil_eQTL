@@ -138,7 +138,7 @@ bsub -o age.out python3.8 -m tensorqtl plink/path \
   --interaction age_int.txt \
    --best_only --mode cis_nominal 
    
-#nothing was significant for these analyses, so no results are provided.
+#nothing was significant for these analyses, but results are provided in supplementary table 2
 
 --------------------------------------------------------
 --------------------------------------------------------
@@ -233,6 +233,7 @@ done; done
 #GCB/GCB_sex1_peer6      
 #GCB/GCB_sex2_peer2      
 #and then renamed the above covariates files generically (ie GCB_sex2_peer2.combined_covariates_header.txt became GCB_sex2.combined_covariates_header.txt)
+#the results for the above sets of data are found in supplementary table 3
 
 #so that it was easier to get the allpairs files
 for c in NaiveT TFH NaiveB GCB;
